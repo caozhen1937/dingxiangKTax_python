@@ -2,18 +2,80 @@
 
 丁香税会数据爬虫源代码
 
-1.数据从http://web.china12366.org爬虫获取，现阶段可爬国家政策等数据 <br />
-2.还有若干个不完善的问题，例如不能直接分页跳转，不能多线程爬虫 <br />
+##项目概括
 
-##使用者注意事项 <br />
-1.本代码你可以任意修改无需通知作者本人，所有数据用于商业，需与http://web.china12366.org取得相应联系 <br />
-2.出现任何问题可以与作者本人联系email地址：quanlanguage@gmail.com,(国内有时发不出来) <br />
-3.python版本与浏览器版本容易发生不兼容的状况，作者使用的是python3+火狐浏览器48 <br />
+1.对中国各大税务相关的网站进行爬虫，收集数据，方便大家搜索并提供各种各种小插件，方便保存文档
 
-##作者愿望
-1.建立一个能收集中国所有的财经法律的信息，所有人可添加财经法律信息并注明那些已经失效，可通过网站（正在开发）进行编辑，通过手机可查询 <br />
-2.作者丁香小全作为这个项目的发起者，会定期更新爬虫程序，编写初代网站，以及 <br />
-3.至于捐赠（前期可能不太需要）若服务器使用量达到一定数，服务器不堪重负采取募捐形式 <br />
+2.已将数据对接到http://quanlanguage.com/ （属于本人自建的网站，用于对接爬虫数据），可通过这个网址进行访问（网址是使用nodejs+mysql进行搭建的）
 
-##招募 <br />
-1.由与作者水平有限，如果你有意愿参与本项目的开发当中：可在telegram中添加我，用户名@quanlanguage <br />
+##项目目前状况
+
+1.项目目前分为二个分支，分别从国家税务总局与china1266网站进行爬虫，
+
+##国家税务总局爬虫（分支Taxcountry分支）概括
+
+1.能对页面进行快照，有助于比较页面是否更改
+
+2.写入mysql数据库
+
+3.对快照进行压缩
+
+##国家税务总局爬虫（分支Taxcountry分支）下次版本更新预计新增加功能
+
+1.对失效链接进行标记
+
+2.讲网页保存个性化的pdf
+
+3.可将数据存入mongodb
+
+##项目运行截图
+
+###1.爬虫页面快照截图
+
+---
+![mkdn-scrl-sync](https://github.com/quanlanguage/dingxiangKTax_python/blob/master/TaxCountry/%E5%BF%AB%E7%85%A7%E6%A0%B7%E5%BC%8F.png)
+---
+###2.运行截图
+
+---
+![mkdn-scrl-sync](https://github.com/quanlanguage/dingxiangKTax_python/blob/master/TaxCountry/%E8%BF%90%E8%A1%8C%E6%88%AA%E5%9B%BE.PNG)
+---
+
+##china1266网站爬虫（分支china12366_1.0.0）概括
+
+1.模拟登陆网址（使用自己的账号，目前该网站停止注册）
+
+2.能写入mysql数据库
+
+##china1266网站爬虫（分支china12366_1.0.0）下次版本更新预计新增加功能
+
+1.增加爬虫快照功能
+
+2.增加对mongodb数据库的支持
+
+3.修复已知问题
+
+##运行截图
+###1.爬虫搜索截图
+
+---
+![mkdn-scrl-sync](https://github.com/quanlanguage/dingxiangKTax_python/blob/master/china12366/%E7%88%AC%E8%99%AB%E6%90%9C%E7%B4%A2%E6%88%AA%E5%9B%BE.png)
+---
+
+###2.登陆运行截图
+
+![mkdn-scrl-sync](https://github.com/quanlanguage/dingxiangKTax_python/blob/master/china12366/%E7%99%BB%E9%99%86%E8%BF%90%E8%A1%8C%E6%88%AA%E5%9B%BE.png)
+---
+
+###3.运行截图
+
+![mkdn-scrl-sync](https://github.com/quanlanguage/dingxiangKTax_python/blob/master/china12366/%E8%BF%90%E8%A1%8C%E6%88%AA%E5%9B%BE.png)
+---
+
+##关于作者
+如果你有任何问题可通过email联系我：quanlanguage@gmail.com,你也可以在issues这里给我提出问题，我会在第一时间内给你解决
+
+##作者忠告：请勿恶意爬虫
+
+
+
