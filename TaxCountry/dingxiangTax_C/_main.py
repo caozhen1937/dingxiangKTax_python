@@ -1,5 +1,12 @@
 #-*- coding:utf-8 -*-
+import datetime
 import os
+
+import multiprocessing
+import re
+import threading
+
+import requests
 from selenium import webdriver
 import time
 from selenium.webdriver.common.keys import Keys
@@ -9,28 +16,47 @@ from PIL import ImageEnhance
 from PIL import ImageFilter
 import pymysql
 import os.path
+import random
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.common.proxy import ProxyType
+from multiprocessing import Process, Lock
+import thread_proxy
+
 time1 = time.time()
+
+changeIP=False;
 
 #####
 chromedriver = r"C:\Users\wangquan\chromedriver\chromedriver.exe"
 os.environ["webdriver.chrome.driver"] = chromedriver
 driver = webdriver.Chrome(chromedriver)
 driver.set_window_size(1200, 900)
+# chromedriver = r"C:\Users\wangquan\chromedriver\chromedriver.exe"
+# os.environ["webdriver.chrome.driver"] = chromedriver
+dcap = dict(DesiredCapabilities.PHANTOMJS)  # 设置userAgent
+dcap["phantomjs.page.settings.userAgent"] = (
+    "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36")
+driver = webdriver.PhantomJS(executable_path=r'C:\Users\wangquan\phantomjs\bin\phantomjs.exe',
+                             desired_capabilities=dcap)
+driver.set_window_size(800, 100)
 url=""
-def sw():
-    for i in range(10000):
-        print("loop:", i )
-        time.sleep(1.5)
-        url="http://hd.chinatax.gov.cn/guoshui/action/GetArticleView1.do?id="+str(i+1)+"&flag=1"
-        driver.get(url)
-
 #存储图片
 def saveWebSitePage(driver,url,id):
-    print("开始----"+str(id))
-    driver = webdriver.PhantomJS(executable_path=r'C:\Users\wangquan\phantomjs\bin\phantomjs.exe')
-
+    #print("开始----"+str(id))
     driver.set_window_size(800, 100)
-    driver.get(url)
+    #设置页面加载超时
+    driver.set_page_load_timeout(15)
+    driver.set_script_timeout(15)  # 这两种设置都进行才有效
+
+    # 爬虫开始
+    try:
+        driver.get(url)
+    except:
+        print("出现未知-错误-----")
+        #退出
+        time.sleep(0.7)
+        return True
+
     #模仿浏览器的滚动页面行为。
     driver.execute_script("""
         (function () {
@@ -53,17 +79,42 @@ def saveWebSitePage(driver,url,id):
       """)
 
 
-    if driver.title=="error":
-        print("未找到页面")
+    #print(driver.page_source)
+    if driver.title != "法规详细内容":
+        #文章提交失败
+        if driver.title=="error":
+            #print(driver.find_element_by_xpath('//*[@id="errorInfo"]').text)
+            time.sleep(0.8)
+            return False
+        #服务器未找到相应页面
+        if driver.title == "Error 500--Internal Server Error":
+            time.sleep(0.8)
+            print("500错误")
+            return False
+        #其他都是服务器拒绝我们要求：402拒绝访问
+        time.sleep(0.8)
+        return True
+
+    # 正则表达式，判断是否含有数字
+    pattern = re.compile('[0-9]+')
+    #发布时间含有中文，事务所，过滤不需要
+    releaseTime = driver.find_element_by_xpath('//*[@id="cwrq"]').text.split("：")[1]  # 发布时间
+    if not pattern.findall(releaseTime):
         time.sleep(1)
-        return
-    print("开始拍照")
+        return False
+    #有效程度含有数字，事务所过滤不需要的
+    effective = driver.find_element_by_xpath('/html/body/div/table[1]/tbody/tr[5]/td/div/font').text  # 有效程度
+    if pattern.findall(effective):
+        time.sleep(1)
+        return False
+    fileTitle = driver.find_element_by_xpath("/html/body/div/table[1]/tbody/tr[2]/td/div/b/span").text  # 文号标题
+    print("文件的标题："+fileTitle)
+    #开始对文件进行拍照
+    print("开始拍照"+driver.current_url)
     #老快照
     fileBlock='image\\contury'+str(id)+'_block.png'
     #新快照
     fileImage='image\\contury'+str(id)+'.png'
-
-    #print(os.path.exists(fileBlock))
 
     #判断老快照是否存在
     if(os.path.exists(fileBlock)):
@@ -102,6 +153,7 @@ def saveWebSitePage(driver,url,id):
         saveToMysql(str(id),fileTitle,fileNumber,effective,releaseTime,fileContent,url)
 
     #print(releaseTime)
+    return False
 
 
 
@@ -186,17 +238,82 @@ def img_zip(path):
 
 def cacheDate():
     print("2222")
+#时间a减去时间b，获得二者的时间差,参数为时间字符串，例如：2017-03-30 16:54:01.660
+def getTimeDiff(timeStra,timeStrb):
+    if timeStra<=timeStrb:
+        return 0
+    ta = time.strptime(timeStra, "%Y-%m-%d %H:%M:%S")
+    tb = time.strptime(timeStrb, "%Y-%m-%d %H:%M:%S")
+    y,m,d,H,M,S = ta[0:6]
+    dataTimea=datetime.datetime(y,m,d,H,M,S)
+    y,m,d,H,M,S = tb[0:6]
+    dataTimeb=datetime.datetime(y,m,d,H,M,S)
+    secondsDiff=(dataTimea-dataTimeb).seconds
+        #两者相加得转换成分钟的时间差
+    minutesDiff=round(secondsDiff/60,1)
+    return minutesDiff
+
+IPList=[]
+
+def crawlerMain(start,over,IPaddress,path,path1,pageSize):
+
+    # 设置代理
+    proxy = webdriver.Proxy()
+    proxy.proxy_type = ProxyType.MANUAL
+    proxy.http_proxy = IPaddress
+    # 将代理设置添加到webdriver.DesiredCapabilities.PHANTOMJS中
+    proxy.add_to_capabilities(webdriver.DesiredCapabilities.PHANTOMJS)
+    driver.start_session(webdriver.DesiredCapabilities.PHANTOMJS)
+
+    print("第" + str(start) + "次循环开始循环："+ time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+
+    #开始循环爬虫
+    for i in range(start,over):
+
+        print("开始循环-次数:", i )
+        #链接地址
+        url = "http://hd.chinatax.gov.cn/guoshui/action/GetArticleView1.do?id=" + str(i) + "&flag=1"
+        #
+        changeIP = saveWebSitePage(driver, url, i)
+        while changeIP:
+            proxy = webdriver.Proxy()
+            proxy.proxy_type = ProxyType.MANUAL
+            # 隐式等待5秒，可以自己调节
+            driver.implicitly_wait(1)
+            #声明全局变量
+            global IPList
+            #判断ip地址
+            if len(IPList):
+                # this list is not None
+                IPaddress=IPList[0]
+                del IPList[0]
+            else:
+                # this list is None
+                IPList.extend(thread_proxy.getIPList(path,path1,pageSize))
+                #没有找到ip地址，重新查找
+                if not len(IPList):
+                    continue
+                IPaddress = IPList[0]
+                del IPList[0]
+            #更换ip地址
+            proxy.http_proxy = IPaddress
+            print(str(IPaddress)+"正在重新访问-"+url)
+            # 将代理设置添加到webdriver.DesiredCapabilities.PHANTOMJS中
+            proxy.add_to_capabilities(webdriver.DesiredCapabilities.PHANTOMJS)
+            driver.start_session(webdriver.DesiredCapabilities.PHANTOMJS)
+            changeIP = saveWebSitePage(driver, url, i )
+    print("第" + str(start) + "次循环开始循环：" + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
 
 ##主函数
-if __name__ == '__main__':
-    for i in range(5000):
-        print("loop:", i+100)
-        print("第"+str(i+100)+"次循环开始循环："+time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())))
-        url = "http://hd.chinatax.gov.cn/guoshui/action/GetArticleView1.do?id=" + str(i+100) + "&flag=1"
-        saveWebSitePage(driver,url,i+100)
-        print("第"+str(i+100)+"次循环结束循环："+time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+def startMain(start,over,IPadress,path,path1,pageSize):
+    #crawlerMain(start, over, IPaddress)
+    crawlerMain(start, over, IPadress,path,path1,pageSize)
     driver.close()
     driver.quit()
+    print("执行完成")
+
+
+
 
 
 
