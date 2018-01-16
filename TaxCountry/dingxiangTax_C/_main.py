@@ -47,7 +47,6 @@ def saveWebSitePage(driver,url,id):
     #设置页面加载超时
     driver.set_page_load_timeout(15)
     driver.set_script_timeout(15)  # 这两种设置都进行才有效
-
     # 爬虫开始
     try:
         driver.get(url)
