@@ -10,10 +10,13 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from threading import Thread
 import queue
+from IP_goubanjia import goubanjiaIP
+from IP_feilongip import getfeilongIP
+from IP_kuaidaili import getKuaidailiIP
+from IP_xici import getXiCiIP
 
 _BE_PROXY_QUEUE =queue.Queue()
-path="mt_proxy.txt"
-path1="mt_proxynew.txt"
+
 class Consumer_Thread(Thread):
     def run(self):
         global _BE_PROXY_QUEUE
@@ -34,92 +37,31 @@ def test_useful(proxy):
     try:
         proxies = {'http': proxy}
         #分析ip地址是否可用，-为我们需要爬虫网页，有效判断是否可用
-        requests.get('http://www.chinatax.gov.cn/n810214/n810606/index.html', timeout=20, proxies=proxies)
-        print('ip地址可用')
+        requests.get('http://ip.cip.cc', timeout=20, proxies=proxies)
+        print('ip地址可用：'+proxy)
         return True
     except Exception as e:
-
+        #print(e)
         return False
 
 
-def get_proxies_from_KDL(max_page):
+def get_proxies_from_KDL(goubanjiaP,max_page):
     #爬虫免费代理ip地址
-    base_url = 'http://www.kuaidaili.com/free/'
-    options = ['intr/', 'inha/']
-
     p_pool = []
 
-    opt = 0
-
-    #错误个数
-    error=1
-
-    while opt <= 1:
-        #初始化错误
-        error = 1
-        page = 1
-        while page < max_page:
-            #随机取去页数
-            url = base_url + options[opt] + str(random.randint(1, 50)) + '/'
-            driver = webdriver.PhantomJS(
-                executable_path=r'C:\Users\wangquan\phantomjs\bin\phantomjs.exe')
-
-            # 设置页面加载超时
-            driver.set_page_load_timeout(15)
-
-            #还原系统代理
-            proxy = webdriver.Proxy()
-            proxy.proxy_type = ProxyType.DIRECT
-            proxy.add_to_capabilities(webdriver.DesiredCapabilities.PHANTOMJS)
-            driver.start_session(webdriver.DesiredCapabilities.PHANTOMJS)
-            # 隐式等待1秒，可以自己调节
-            driver.implicitly_wait(1)
-
-            # 网页爬虫开始
-            try:
-                driver.get(url)
-            except:
-                print("出现未知-错误-----")
-                # 暂停
-                time.sleep(random.randint(1, 6) * 1)
-                print("访问页面：已发生第" + str(error - 1) + "次错误")
-                error = error + 1
-                #退出循环
-                if error==6:
-                    error=1
-                    break
-                #终止此次循环
-                continue
-            #打印此次访问URL地址
-            print(url)
-            time.sleep(0.7)
-            bobj = BeautifulSoup(driver.page_source,"lxml")
-            driver.close()
-            try:
-                siblings = bobj.findAll(name='table', attrs={'class': 'table table-bordered table-striped'})[
-                    0].tbody.tr.next_siblings
-            except Exception as e:
-                error=error+1
-                #随机等待
-                time.sleep(random.randint(1, 6) * 1)
-                print("访问页面：已发生第"+str(error-1)+"次错误")
-                #如果连续五次错误退出
-                if error==6:
-                    error=1
-                    break
-                continue
-            count = 0
-            for sibling in siblings:
-                try:
-                    get_proxy = sibling.findAll(name='td')[0].get_text() + ':' + sibling.findAll(name='td')[
-                        1].get_text()
-                    #print(get_proxy)
-                    p_pool.append(get_proxy)
-                    count += 1
-                except AttributeError:
-                    pass
-            page += 1
-        opt += 1
+    #获取免费ip地址开始
+    p_pool.extend(goubanjiaIP(goubanjiaP))
+    p_pool.extend(getfeilongIP())
+    p_pool.extend(getKuaidailiIP(max_page))
+    
+    #判断数组的长度
+    if len(p_pool):
+        p_pool.extend(getXiCiIP(max_page,p_pool[0]))
+    else:
+        time.sleep(5)
+        p_pool=get_proxies_from_KDL(goubanjiaP,max_page)
+    #数组去重
+    p_pool = list(set(p_pool))
     return p_pool
 
 
@@ -144,7 +86,7 @@ def test_proxies_efficience(proxy):
     #print ('Without Proxy: cost ', cost / 3, ' seconds')
 
 
-def geIPmain(path,pageSize):
+def geIPmain(path,goubanjiaP,max_page):
     # 清空已有的文件
     print("----清空"+path+"-----")
     with open(path, 'w') as f:
@@ -153,7 +95,7 @@ def geIPmain(path,pageSize):
     max_thread = 100
     threads = []
     # 2大页面，每个大页面3个分页
-    pool = get_proxies_from_KDL(pageSize)
+    pool = get_proxies_from_KDL(goubanjiaP,max_page)
     for i in range(len(pool)):
         _BE_PROXY_QUEUE.put(pool[i])
     for i in range(max_thread):
@@ -170,6 +112,9 @@ def Toheavy(path1,path2):
     list_1 = []
     for line in open(path1):  # 老文件
         tmp = line.strip()
+        #空行去除
+        if len(tmp)==0:
+            continue
         if tmp not in list_1:
             list_1.append(tmp)
             outfile.write(line)
@@ -188,7 +133,7 @@ def file_exists(filename):
 #去重一行ip地址   path2 = 'mt_proxynew.txt'
 #pageSize:爬虫页面大小
 #放回ip地址数组
-def getIPList(path1,path2,pageSize):
+def getIPList(path1,path2,goubanjiaP,max_page):
     #文件不存在创建空文件
     if not file_exists(path1):
         print("判断-文件")
@@ -201,12 +146,15 @@ def getIPList(path1,path2,pageSize):
     path2=path2
     ipList = []
     print("开始获取ip地址列表")
-    geIPmain(path,pageSize)
+    geIPmain(path,goubanjiaP,max_page)
     print("获取ip地址结束")
     #去除文本当中的相同ip地址
     Toheavy(path1,path2)
     #读取文件当中的ip地址
     for line in open(path2):
         line = line.strip('\n')
+        #若是空行重新开始循环
+        if len(line)==0:
+            continue
         ipList.append(line)
     return ipList

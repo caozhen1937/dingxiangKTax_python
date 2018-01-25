@@ -254,7 +254,7 @@ def getTimeDiff(timeStra,timeStrb):
 
 IPList=[]
 
-def crawlerMain(start,over,IPaddress,path,path1,pageSize):
+def crawlerMain(start,over,IPaddress,path,path1,goubanjiaP,max_page):
 
     # 设置代理
     proxy = webdriver.Proxy()
@@ -288,7 +288,7 @@ def crawlerMain(start,over,IPaddress,path,path1,pageSize):
                 del IPList[0]
             else:
                 # this list is None
-                IPList.extend(thread_proxy.getIPList(path,path1,pageSize))
+                IPList.extend(thread_proxy.getIPList(path,path1,goubanjiaP,max_page))
                 #没有找到ip地址，重新查找
                 if not len(IPList):
                     continue
@@ -304,9 +304,9 @@ def crawlerMain(start,over,IPaddress,path,path1,pageSize):
     print("第" + str(start) + "次循环开始循环：" + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
 
 ##主函数
-def startMain(start,over,IPadress,path,path1,pageSize):
+def startMain(start,over,IPadress,path,path1,goubanjiaP,max_page):
     #crawlerMain(start, over, IPaddress)
-    crawlerMain(start, over, IPadress,path,path1,pageSize)
+    crawlerMain(start, over, IPadress,path,path1,goubanjiaP,max_page)
     driver.close()
     driver.quit()
     print("执行完成")
