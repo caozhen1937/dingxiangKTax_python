@@ -42,9 +42,8 @@ def getNewAddressIP(IPaddressList,goubanjiaP,max_page):
         if not len(xici):
             xici.extend(getXiCiIP(max_page,address))
             ipList.extend(xici)
+        #若找到代理IP则终止循环
         if len(Kuaidaili) or len(xici) or len(guoban):
-            continue
-        else:
             break
     return ipList
 
