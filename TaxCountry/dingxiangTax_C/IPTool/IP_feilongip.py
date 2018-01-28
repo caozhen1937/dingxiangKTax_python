@@ -1,22 +1,20 @@
+# coding=utf-8
+
 import random
-import re
-
-from selenium.webdriver.common.proxy import ProxyType
-
 import requests
 import time
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from threading import Thread
-import queue
+from HTML_Decoding.gethtmlTostring import filter_tags
 
-from gethtmlTostring import filter_tags
-feilongip="http://www.feilongip.com/"
+
+#飞龙代理已经失效不可用--此代码仅供后来者学习之用
+#ip地址大量不可用
 def getfeilongIP():
+    feilongip = "http://www.feilongip.com/"
     error=True
     p_pool = []
     num=1
-    print("-开始从飞龙代理爬虫-")
+    print("-开始从<飞龙代理IP>---获取免费代理ip地址：")
     while error:
         headers = {
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36'}
@@ -38,3 +36,6 @@ def getfeilongIP():
             time.sleep(random.randint(1, 6) * 1)
     print("-开始从飞龙代理结束-")
     return p_pool
+
+
+
