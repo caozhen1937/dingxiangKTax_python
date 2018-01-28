@@ -20,7 +20,8 @@ import random
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.common.proxy import ProxyType
 from multiprocessing import Process, Lock
-import thread_proxy
+
+from IPTool_Main.thread_proxy import getIPList
 
 time1 = time.time()
 
@@ -288,7 +289,7 @@ def crawlerMain(start,over,IPaddress,path,path1,goubanjiaP,max_page):
                 del IPList[0]
             else:
                 # this list is None
-                IPList.extend(thread_proxy.getIPList(path,path1,goubanjiaP,max_page))
+                IPList.extend(getIPList(path,path1,goubanjiaP,max_page))
                 #没有找到ip地址，重新查找
                 if not len(IPList):
                     continue

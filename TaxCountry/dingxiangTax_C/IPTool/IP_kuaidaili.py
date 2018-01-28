@@ -11,52 +11,46 @@ from threading import Thread
 import queue
 
 
-def getKuaidailiIP(max_page):
+def getKuaidailiIP(max_page,IPaddress):
+
+    driver = webdriver.PhantomJS(
+        executable_path=r'C:\Users\wangquan\phantomjs\bin\phantomjs.exe')
+    # 设置系统代理
+    proxy = webdriver.Proxy()
+    proxy.proxy_type = ProxyType.MANUAL
+    # 代理ip地址
+    proxy.http_proxy = IPaddress
+    # 将代理设置添加到webdriver.DesiredCapabilities.PHANTOMJS中
+    proxy.add_to_capabilities(webdriver.DesiredCapabilities.PHANTOMJS)
+    driver.start_session(webdriver.DesiredCapabilities.PHANTOMJS)
     #爬虫免费代理ip地址
-    base_url = 'http://www.kuaidaili.com/free/'
+    base_url = "https://www.kuaidaili.com/free/"
     options = ['intr/', 'inha/']
     p_pool = []
     opt = 0
-    #错误个数
-    error=1
     while opt <= 1:
         #初始化错误
         error = 1
         page = 1
         while page < max_page:
-            #随机取去页数
+            #拼接目标URL
             url = base_url + options[opt] +  str(page) + '/'
-            driver = webdriver.PhantomJS(
-                executable_path=r'C:\Users\wangquan\phantomjs\bin\phantomjs.exe')
-
-            # 设置页面加载超时
-            driver.set_page_load_timeout(15)
-
-            #还原系统代理
-            proxy = webdriver.Proxy()
-            proxy.proxy_type = ProxyType.DIRECT
-            proxy.add_to_capabilities(webdriver.DesiredCapabilities.PHANTOMJS)
-            driver.start_session(webdriver.DesiredCapabilities.PHANTOMJS)
-            # 隐式等待1秒，可以自己调节
-            driver.implicitly_wait(1)
-
             # 网页爬虫开始
             try:
                 driver.get(url)
+                # 隐式等待2秒，可以自己调节
+                driver.implicitly_wait(1)
             except:
-                print("出现未知-错误-----")
                 # 暂停
                 time.sleep(random.randint(1, 6) * 1)
                 print("访问页面：已发生第" + str(error - 1) + "次错误")
                 error = error + 1
                 #退出循环
                 if error==6:
-                    error=1
                     break
                 #终止此次循环
                 continue
             #打印此次访问URL地址
-            print(url)
             time.sleep(0.7)
             bobj = BeautifulSoup(driver.page_source,"lxml")
             driver.close()
@@ -66,11 +60,10 @@ def getKuaidailiIP(max_page):
             except Exception as e:
                 error=error+1
                 #随机等待
-                time.sleep(random.randint(1, 6) * 1)
+                time.sleep(random.randint(1, 6) * 0.1)
                 print("访问页面：已发生第"+str(error-1)+"次错误")
                 #如果连续五次错误退出
                 if error==6:
-                    error=1
                     break
                 continue
             count = 0
