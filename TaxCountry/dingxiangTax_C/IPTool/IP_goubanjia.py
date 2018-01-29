@@ -12,8 +12,6 @@ from selenium import webdriver
 from threading import Thread
 import queue
 
-from selenium.webdriver.support.wait import WebDriverWait
-
 from HTML_Decoding.gethtmlTostring import filter_tags
 
 
@@ -72,7 +70,8 @@ def goubanjiaIP(Pagesize,IPaddress):
     driver1.set_window_size(0, 0)
     #设置窗体的位置
     driver1.set_window_position(-200,-200)
-
+    #设置爬虫页面超时
+    driver1.set_page_load_timeout(5)
     # 设置系统代理
     proxy = webdriver.Proxy()
     proxy.proxy_type = ProxyType.MANUAL
@@ -88,10 +87,10 @@ def goubanjiaIP(Pagesize,IPaddress):
             #地址
             url=urlItem+"index"+str(opt)+".shtml"
             try:
+
                 #访问目标地址
                 driver1.get(url)
-                # 等待时长6秒，默认0.5秒询问一次
-                WebDriverWait(driver1, 6)
+                time.sleep(0.5)
                 #获取页面信息
                 pageSearch=driver1.page_source
                 #对页面数据进行转码
