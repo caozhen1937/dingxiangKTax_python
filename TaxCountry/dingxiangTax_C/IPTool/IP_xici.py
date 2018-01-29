@@ -13,6 +13,9 @@ import queue
 
 
 #西次ip地址获取 ，页面大小，代理二个参数
+from selenium.webdriver.support.wait import WebDriverWait
+
+
 def getXiCiIP(PageSize,IPaddress):
 
     driver = webdriver.PhantomJS(
@@ -27,6 +30,8 @@ def getXiCiIP(PageSize,IPaddress):
     # 将代理设置添加到webdriver.DesiredCapabilities.PHANTOMJS中
     proxy.add_to_capabilities(webdriver.DesiredCapabilities.PHANTOMJS)
     driver.start_session(webdriver.DesiredCapabilities.PHANTOMJS)
+    #设置爬虫页面超时
+    driver.set_page_load_timeout(5)
     #从西次进行爬虫
     p_pool = []
     xici_page = 1
@@ -48,6 +53,8 @@ def getXiCiIP(PageSize,IPaddress):
                 driver.set_page_load_timeout(max_wait)
                 driver.set_script_timeout(max_wait)
                 driver.get(xici_url)
+                # 等待时长6秒，默认0.5秒询问一次
+                WebDriverWait(driver, 6)
                 bobj_2 = BeautifulSoup(driver.page_source, "lxml")
                 sibs = bobj_2.findAll('table', {'id': 'ip_list'})[0].tr.next_siblings
             except Exception as e:

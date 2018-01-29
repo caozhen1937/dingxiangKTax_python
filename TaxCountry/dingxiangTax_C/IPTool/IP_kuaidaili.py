@@ -23,6 +23,7 @@ def getKuaidailiIP(max_page,IPaddress):
     # 将代理设置添加到webdriver.DesiredCapabilities.PHANTOMJS中
     proxy.add_to_capabilities(webdriver.DesiredCapabilities.PHANTOMJS)
     driver.start_session(webdriver.DesiredCapabilities.PHANTOMJS)
+    driver.set_page_load_timeout(5)
     #爬虫免费代理ip地址
     base_url = "https://www.kuaidaili.com/free/"
     options = ['intr/', 'inha/']
