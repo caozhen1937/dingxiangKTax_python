@@ -70,8 +70,6 @@ def goubanjiaIP(Pagesize,IPaddress):
     driver1.set_window_size(0, 0)
     #设置窗体的位置
     driver1.set_window_position(-200,-200)
-    #设置爬虫页面超时
-    driver1.set_page_load_timeout(5)
     # 设置系统代理
     proxy = webdriver.Proxy()
     proxy.proxy_type = ProxyType.MANUAL
@@ -87,7 +85,8 @@ def goubanjiaIP(Pagesize,IPaddress):
             #地址
             url=urlItem+"index"+str(opt)+".shtml"
             try:
-
+                # 设置爬虫页面超时
+                driver1.set_page_load_timeout(5)
                 #访问目标地址
                 driver1.get(url)
                 time.sleep(0.5)

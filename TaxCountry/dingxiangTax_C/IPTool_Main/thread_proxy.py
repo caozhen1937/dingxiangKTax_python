@@ -18,6 +18,9 @@ class Consumer_Thread(Thread):
         while not _BE_PROXY_QUEUE.empty():
             p = _BE_PROXY_QUEUE.get()
             try:
+                if p=="127.0.0.1:1080":
+                    with open(path, 'a') as f:
+                        f.write(p + '\n')
                 if test_usefulofHttp(p):
                     with open(path, 'a') as f:
                         f.write(p + '\n')
@@ -28,14 +31,14 @@ class Consumer_Thread(Thread):
 
 
 def getNewAddressIP(IPaddressList,goubanjiaP,max_page):
-    guoban=[]
+    #guoban=[]
     Kuaidaili=[]
     xici=[]
     ipList = []
     for address in IPaddressList:
-        if not len(guoban):
-            guoban.extend(goubanjiaIP(goubanjiaP,address))
-            ipList.extend(guoban)
+        # if not len(guoban):
+        #     guoban.extend(goubanjiaIP(goubanjiaP,address))
+        #     ipList.extend(guoban)
         if not len(Kuaidaili):
             Kuaidaili.extend(getKuaidailiIP(max_page,address))
             ipList.extend(Kuaidaili)
@@ -43,7 +46,7 @@ def getNewAddressIP(IPaddressList,goubanjiaP,max_page):
             xici.extend(getXiCiIP(max_page,address))
             ipList.extend(xici)
         #若找到代理IP则终止循环
-        if len(Kuaidaili) or len(xici) or len(guoban):
+        if (len(Kuaidaili) and len(xici)) or len(xici):
             break
     return ipList
 

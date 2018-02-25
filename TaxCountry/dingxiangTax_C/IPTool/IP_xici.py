@@ -20,8 +20,6 @@ def getXiCiIP(PageSize,IPaddress):
 
     driver = webdriver.PhantomJS(
         executable_path=r'C:\Users\wangquan\phantomjs\bin\phantomjs.exe')
-    # 设置页面加载超时
-    driver.set_page_load_timeout(5)
     # 设置系统代理
     proxy = webdriver.Proxy()
     proxy.proxy_type = ProxyType.MANUAL
@@ -66,8 +64,9 @@ def getXiCiIP(PageSize,IPaddress):
                 get_proxy = sib.findAll('td')[1].get_text() + ':' + sib.findAll('td')[2].get_text()
                 p_pool.append(get_proxy)
                 new_count += 1
-            except AttributeError:
-                pass
+            except Exception as e:
+                print('error 2', e)
+                break
         xici_page += 1
         # 第几个分页面
     return p_pool
