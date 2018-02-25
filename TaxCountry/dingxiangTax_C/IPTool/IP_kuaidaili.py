@@ -36,9 +36,11 @@ def getKuaidailiIP(max_page,IPaddress):
         while page < max_page:
             #拼接目标URL
             url = base_url + options[opt] +  str(page) + '/'
+            print(url)
             # 网页爬虫开始
             try:
                 driver.get(url)
+                #print(driver.page_source)
                 # 隐式等待2秒，可以自己调节
                 driver.implicitly_wait(1)
             except:
@@ -61,7 +63,7 @@ def getKuaidailiIP(max_page,IPaddress):
             except Exception as e:
                 error=error+1
                 #随机等待
-                time.sleep(random.randint(1, 6) * 0.1)
+                time.sleep(random.randint(1, 6) * 1)
                 print("访问页面：已发生第"+str(error-1)+"次错误")
                 #如果连续五次错误退出
                 if error==6:
@@ -69,9 +71,11 @@ def getKuaidailiIP(max_page,IPaddress):
                 continue
             count = 0
             for sibling in siblings:
+                #print(sibling)
                 try:
                     get_proxy = sibling.findAll(name='td')[0].get_text() + ':' + sibling.findAll(name='td')[
                         1].get_text()
+                    #print(get_proxy)
                     p_pool.append(get_proxy)
                     count += 1
                 except AttributeError:
